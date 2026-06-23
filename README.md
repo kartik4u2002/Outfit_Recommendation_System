@@ -124,6 +124,50 @@ print(f"Rationale: {first_outfit['stylist_rationale']}")
 
 ---
 
+## ⚙️ Setup & Execution Instructions
+
+Follow these steps to run the interactive fashion stylist chatbot and verification pipelines locally:
+
+### 1. Prerequisites
+- Python 3.10 or higher.
+- A Gemini API Key (get one for free at [Google AI Studio](https://aistudio.google.com/)).
+- A GPU is recommended for first-time feature extraction but the app runs instantaneously on CPU using pre-extracted embedding caches.
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/kartik4u2002/Fashion-Recommendation.git
+cd Fashion-Recommendation
+```
+
+### 3. Install Dependencies
+Install all required libraries including Streamlit, Hugging Face Transformers, PyTorch, FAISS, and AVIF image plugins:
+```bash
+pip install streamlit google-generativeai transformers sentence-transformers faiss-cpu torch torchvision matplotlib seaborn pandas numpy pillow-heif pillow-avif-plugin scikit-learn tqdm
+```
+
+### 4. Configure Gemini API Key
+Create a `.env` file in the project root directory and add your Gemini API key:
+```env
+GEMINI_API_KEY=your_actual_gemini_api_key_here
+```
+*(The Streamlit app is configured to automatically read this key on launch).*
+
+### 5. Launch the Chatbot App
+Start the interactive Streamlit chatbot application:
+```bash
+python -m streamlit run app.py
+```
+This will start the local server and open the web app in your default browser at `http://localhost:8501`.
+
+### 6. Verify and Run the Notebook Pipeline
+To verify the complete ML engineering pipeline (including dataset analysis, FashionCLIP hybrid embeddings, FAISS indexing, evaluation against ground truth, and PCA visualizations), execute:
+```bash
+python run_notebook.py
+```
+This will run all cells in `fashion_recommendation_assistant.ipynb` top-to-bottom and save the executed outputs.
+
+---
+
 ## 🏛️ System Architecture
 
 The Antigravity AI Fashion Stylist system is built on a hybrid architecture that integrates **vector search**, **semantic NLU parsing**, **context-aware rule engines**, and **LLM generation**.
