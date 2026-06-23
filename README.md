@@ -170,7 +170,7 @@ This will run all cells in `fashion_recommendation_assistant.ipynb` top-to-botto
 
 ## 🏛️ System Architecture
 
-The Antigravity AI Fashion Stylist system is built on a hybrid architecture that integrates **vector search**, **semantic NLU parsing**, **context-aware rule engines**, and **LLM generation**.
+The AI Fashion Stylist system is built on a hybrid architecture that integrates **vector search**, **semantic NLU parsing**, **context-aware rule engines**, and **LLM generation**.
 
 Here is the overall workflow of the conversational stylist:
 
