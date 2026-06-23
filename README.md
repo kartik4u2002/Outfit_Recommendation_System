@@ -176,4 +176,13 @@ The notebook contains 8 sections, structured as follows:
   * **5c (PCA Cluster Visualization)**: Projects hybrid embeddings to 2D using PCA, color-coded by master category (Apparel, Footwear, Accessories), annotated with typical categories.
 * **## SECTION 6: Demo Showcase Cell**
   * Demonstrates three end-to-end examples with output: text search queries, outfit generation from a seed item, and a simulated 5-turn conversation transcript.
+* **## SECTION 7: User & Context-Aware Recommendations**
+  * **7a (User Profile)**: Defines the `UserProfile` dataclass mapping gender, age group, occasion context, and style preferences.
+  * **7b (Context Mappings)**: Implements static rules for preferred styles, preferred colors, and avoided types per occasion and age segment.
+  * **7c (Candidate Filtering)**: Eliminates gender-incompatible products and excluded items per occasion context.
+  * **7d (Context Scorer)**: Re-ranks products using a 5-signal soft scoring formula: Base Similarity (30%), Occasion Relevance (25%), Color Context (20%), Style Alignment (15%), and Age Formality (10%).
+  * **7e (Profile Outfit Generator)**: Compiles outfits matching slots based on context-aware scores.
+  * **7f (Profile Chat)**: Parses natural language queries to extract user profiles and overrides dropdown settings.
+  * **7g (Profile Chat Dashboard & Demo)**: Builds an interactive widget dashboard with dropdown selectors and executes a static demo printing outcomes for 5 diverse test queries with detailed signal score breakdowns.
+
 
