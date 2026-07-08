@@ -290,61 +290,8 @@ def color_compatible(c1, c2) -> bool:
     return False
 
 def compatibility_score(id1_or_idx, id2_or_idx, df=df, sim_matrix=sim_matrix) -> Tuple[float, str]:
-    if isinstance(id1_or_idx, (int, np.integer)):
-        idx1 = int(id1_or_idx)
-    else:
-        matches = df[df['id'] == id1_or_idx]
-        if matches.empty:
-            raise ValueError(f"Item ID '{id1_or_idx}' not found in dataframe")
-        idx1 = matches.index[0]
-        
-    if isinstance(id2_or_idx, (int, np.integer)):
-        idx2 = int(id2_or_idx)
-    else:
-        matches = df[df['id'] == id2_or_idx]
-        if matches.empty:
-            raise ValueError(f"Item ID '{id2_or_idx}' not found in dataframe")
-        idx2 = matches.index[0]
-    
-    row1 = df.iloc[idx1]
-    row2 = df.iloc[idx2]
-    
-    # Category matching
-    cat1, cat2 = row1['category'], row2['category']
-    cat_match = 0.0
-    if cat2 in COMPATIBLE_CATEGORIES.get(cat1, []) or cat1 in COMPATIBLE_CATEGORIES.get(cat2, []):
-        cat_match = 1.0
-        
-    # Color harmony matching
-    col1, col2 = row1['color'], row2['color']
-    col_match = 1.0 if color_compatible(col1, col2) else 0.0
-    
-    # Embedding similarity
-    sim = sim_matrix[idx1, idx2] if sim_matrix is not None else 0.5
-    sim_score = float(np.clip((sim + 1) / 2, 0.0, 1.0))
-    
-    total_score = 0.4 * cat_match + 0.3 * col_match + 0.3 * sim_score
-    
-    reasons = []
-    if cat_match > 0:
-        reasons.append(f"the style profile of {cat1} pairs well with {cat2}")
-    else:
-        reasons.append(f"{cat1} and {cat2} are an unconventional clothing combination")
-        
-    if col_match > 0:
-        if col1 == col2:
-            reasons.append(f"the monochromatic look in {col1} is clean and structured")
-        elif col1 in COLOR_HARMONY['neutrals'] or col2 in COLOR_HARMONY['neutrals']:
-            reasons.append(f"the classic contrast of {col1} and {col2} is versatile")
-        else:
-            reasons.append(f"the color pairing of {col1} and {col2} looks naturally balanced")
-    else:
-        reasons.append(f"the color clash between {col1} and {col2} creates a highly bold aesthetic")
-        
-    reasons.append(f"the visual-textual similarity match is {sim_score*100:.0f}%")
-    explanation = f"Recommended because " + ", and ".join(reasons) + "."
-    
-    return total_score, explanation
+    from compatibility_engine import compatibility_score as neural_compat_score
+    return neural_compat_score(id1_or_idx, id2_or_idx, df)
 
 def generate_complete_outfit(seed_id, df=df, sim_matrix=sim_matrix) -> dict:
     matches = df[df['id'] == seed_id]

@@ -178,35 +178,50 @@ graph TD
         OutfitGen --> ScoreScorer[5-Signal Re-Ranking Scorer]
         
         subgraph 5-Signal Scorer
-            ScoreScorer --> BaseCompat[Base Styling Compatibility 30%]
-            ScoreScorer --> OccasionCLIP[Zero-Shot CLIP Occasion Relevance 25%]
-            ScoreScorer --> ColorPalette[Color Context Fit 20%]
-            ScoreScorer --> StylePref[Style Alignment Boost 15%]
-            ScoreScorer --> AgeGroup[Age Formality Fit 10%]
+            ScoreScorer --> BaseCompat["Base Transformer Compatibility (30%)"]
+            ScoreScorer --> OccasionCLIP["Zero-Shot CLIP Occasion Relevance (25%)"]
+            ScoreScorer --> ColorPalette["Color Context Fit (20%)"]
+            ScoreScorer --> StylePref["Style Alignment Boost (15%)"]
+            ScoreScorer --> AgeGroup["Age Formality Fit (10%)"]
         end
     end
     
     Recommender -->|Recommended Items + Rationales| GeminiHumanizer[Gemini Stylist Explainer]
     GeminiHumanizer -->|Humanized Stylist Explanation| Streamlit
     Streamlit -->|Rendered Product Cards| User
+    
+    subgraph Transformer Compatibility Engine
+        BaseCompat -->|Inputs| ModalityProj[Modality Projectors]
+        ModalityProj -->|Visual, Text, Metadata| ModalityFusion["Summation Fusion & LayerNorm"]
+        ModalityFusion -->|Fused Sequence| SlotPosEmbed[Slot & Positional Embeddings]
+        SlotPosEmbed -->|Sequence Vectors| TransEncoder[4-Layer Transformer Encoder]
+        TransEncoder -->|Contextualized Embeds| AttnPooling[Attention Pooling]
+        AttnPooling -->|Outfit Embedding| PredictionHeads["Prediction Heads: Score & Confidence"]
+    end
 ```
 
 ### 1. Outfit Compatibility Engine
-The compatibility engine evaluates the styling cohesion between fashion products using a composite score:
-$$\text{Compatibility Score} = 0.4 \times \text{Category Match} + 0.3 \times \text{Color Harmony} + 0.3 \times \text{Embedding Similarity}$$
+The compatibility engine has been upgraded from simple rule-based and pairwise similarity metrics to a **Multimodal Transformer Compatibility Model** (`FashionTransformerCompatibilityModel`) that processes a sequence of fashion items to predict compatibility and confidence scores.
 
-* **Category Compatibility**: Map-based rules (`COMPATIBLE_CATEGORIES`) defining which items pair together structurally (e.g. `formal-shirts` match with `trousers` and `formal-shoes`).
-* **Color Harmony**: Checks if color combinations match neutral colors (White, Black, Navy Blue, Beige, Cream, Off White, Grey) or belong to curated harmonious pairs (e.g. Red + Black, Green + Beige, Gold + Black).
-* **Multimodal Embedding Similarity**: Calculates cosine similarity using the **FashionCLIP** (`patrickjohncyh/fashion-clip`) average hybrid embeddings of the products:
-  $$\text{Embedding Similarity} = \frac{\cos(\mathbf{e}_1, \mathbf{e}_2) + 1}{2}$$
-  where $\mathbf{e}_i$ is the hybrid normalized text + vision embedding vector for product $i$.
+#### Architecture Details:
+* **Modality Projectors**:
+  * **Visual Projector**: A multi-layer perceptron (MLP) projecting 512-dimensional **FashionCLIP** visual embeddings to a joint 512-dimensional space.
+  * **Text Projector**: An MLP projecting 512-dimensional **FashionCLIP** text embeddings to the same joint 512-dimensional space.
+  * **Metadata Projector**: Learns low-dimensional embedding representations for 10 attributes (Category, Color, Occasion, Season, Gender, Style, Material, Pattern, Brand, Fit), concatenates them, and projects them to 512 dimensions.
+* **Modality Fusion**: Adds visual, text, and metadata projections together, followed by Layer Normalization and Dropout for regularization.
+* **Slot & Positional Embeddings**: Adds learned slot embeddings (mapping items to slots: `Topwear`, `Bottomwear`, `Footwear`, `Layer`, `Accessory`, or `Pad`) and position embeddings to preserve order and structure in the outfit sequence.
+* **Transformer Encoder**: Employs a 4-layer Transformer Encoder (8 attention heads, 512 hidden dimension, 2048 feedforward dimension) to capture deep contextual interactions and styling relations among all items in the outfit.
+* **Attention Pooling**: Aggregates the contextualized sequence of item embeddings into a single outfit embedding using a query-based attention mechanism.
+* **Compatibility & Confidence Heads**: Uses dedicated linear classification heads to output:
+  * **Compatibility Score**: Continuous value in $[0, 1]$ indicating outfit cohesion.
+  * **Confidence**: Continuous value in $[0, 1]$ indicating the model's prediction certainty.
 
 ---
 
 ### 2. User & Context-Aware Recommendations
 To provide personalized recommendations matching user situations, the engine re-ranks candidate products using 4 profile parameters (Gender, Age Group, Occasion, Style Preference) across 5 scoring signals:
 
-1. **Base Styling Compatibility (30% weight)**: Calculated via the Outfit Compatibility Engine score.
+1. **Base Styling Compatibility (30% weight)**: Calculated via the Multimodal Transformer Compatibility Model score.
 2. **Occasion Relevance (25% weight)**: Replaces rule-based category list mappings with a **zero-shot text-to-image similarity check**. It encodes descriptive occasion text targets (e.g., `"business formal office wear"` for `Office`) via FashionCLIP's text encoder and computes the cosine similarity against the candidate product's image embedding (`visual_norm`).
 3. **Color Context (20% weight)**: Scores color alignment depending on the occasion profile (e.g. neutral colors for office, bright/bold colors for parties).
 4. **Style Preference (15% weight)**: Boosts product types aligned with the user's specific preference (e.g. Streetwear boosts sweatshirts, sneakers, and track pants).
